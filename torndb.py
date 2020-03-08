@@ -250,17 +250,22 @@ class Row(dict):
             raise AttributeError(name)
 
 if MySQLdb is not None:
-    # Fix the access conversions to properly recognize unicode/binary
-    FIELD_TYPE = MySQLdb.constants.FIELD_TYPE
-    FLAG = MySQLdb.constants.FLAG
-    CONVERSIONS = copy.copy(MySQLdb.converters.conversions)
+    # original mysqldb detection
+    if MySQLdb.__author__.startswith('Andy Dustman'):
+        # Fix the access conversions to properly recognize unicode/binary
+        FIELD_TYPE = MySQLdb.constants.FIELD_TYPE
+        FLAG = MySQLdb.constants.FLAG
+        CONVERSIONS = copy.copy(MySQLdb.converters.conversions)
 
-    field_types = [FIELD_TYPE.BLOB, FIELD_TYPE.STRING, FIELD_TYPE.VAR_STRING]
-    if 'VARCHAR' in vars(FIELD_TYPE):
-        field_types.append(FIELD_TYPE.VARCHAR)
+        field_types = [FIELD_TYPE.BLOB, FIELD_TYPE.STRING, FIELD_TYPE.VAR_STRING]
+        if 'VARCHAR' in vars(FIELD_TYPE):
+            field_types.append(FIELD_TYPE.VARCHAR)
 
-    for field_type in field_types:
-        CONVERSIONS[field_type] = [(FLAG.BINARY, str)] + CONVERSIONS[field_type]
+        for field_type in field_types:
+            CONVERSIONS[field_type] = [(FLAG.BINARY, str)] + CONVERSIONS[field_type]
+    else:
+        # mysqlclient and other replacement packaged don't need additional conversions
+        CONVERSIONS = copy.copy(MySQLdb.converters.conversions)
 
     # Alias some common MySQL exceptions
     IntegrityError = MySQLdb.IntegrityError
